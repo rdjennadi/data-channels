@@ -36,11 +36,9 @@ You can further customize the execution of the container with additional flags:
  `PASSWORD=password`            | Protect you kafka resources when running publicly with username `kafka` with the password you set
  `USER=username`                | Run in combination with `PASSWORD` to specify the username to use on basic auth
  `RUNTESTS=0`                   | Disable the (coyote) integration tests from running when container starts
- `FORWARDLOGS=0`                | Disable running 5 file source connectors that bring application logs into Kafka topics
- `RUN_AS_ROOT=1`                | Run kafka as `root` user - useful to i.e. test HDFS connector
  `DISABLE_JMX=1`                | Disable JMX - enabled by default on ports 9581 - 9585
  `TOPIC_DELETE=0`               | Configure whether you can delete topics. By default topics can be deleted.
- `<SERVICE>_PORT=<PORT>`        | Custom port `<PORT>` for service, where `<SERVICE>` one of `ZK`, `BROKER`, `BROKER_SSL`, `REGISTRY`, `REST`, `CONNECT`
+ `<SERVICE>_PORT=<PORT>`        | Custom port `<PORT>` for service, where `<SERVICE>` one of `ZK`, `BROKER`, `BROKER_SSL`, `REGISTRY`, `REST`
  `ENABLE_SSL=1`                 | Generate a CA, key-certificate pairs and enable a SSL port on the broker
  `SSL_EXTRA_HOSTS=IP1,host2`    | If SSL is enabled, extra hostnames and IP addresses to include to the broker certificate
  `DEBUG=1`                      | Print stdout and stderr of all processes to container's stdout. Useful for debugging early container exits.
@@ -60,7 +58,7 @@ Also periodically pull from docker hub to refresh your cache.
 #### Custom Ports
 
 To use custom ports for the various services, you can take advantage of the
-`ZK_PORT`, `BROKER_PORT`, `REGISTRY_PORT`, `REST_PORT`, `CONNECT_PORT` and
+`ZK_PORT`, `BROKER_PORT`, `REGISTRY_PORT`, `REST_PORT` and
 `WEB_PORT` environment variables. One catch is that you can't swap ports; e.g
 to assign 8082 (default REST Proxy port) to the brokers.
 
@@ -106,7 +104,7 @@ On a new console, run another instance of fast-data-dev only to get access to
 Kafka command line utilities and use TLS to connect to the broker of the former
 container:
 
-    docker run --rm -it --net=host --entrypoint bash landoop/fast-data-dev
+    docker run --rm -it --net=host --entrypoint bash nimble/data-channels
     root@fast-data-dev / $ wget localhost:3030/certs/truststore.jks
     root@fast-data-dev / $ wget localhost:3030/certs/client.jks
     root@fast-data-dev / $ kafka-producer-perf-test --topic tls_test \
@@ -140,7 +138,7 @@ installed and want just the additional Landoop Fast Data web UI.
 You can configure Connect's heap size via the environment variable
 `CONNECT_HEAP`. The default is `1G`:
 
-    docker run -e CONNECT_HEAP=5G -d landoop/fast-data-dev
+    docker run -e CONNECT_HEAP=5G -d nimble/data-channels
 
 #### Basic Auth (password)
 
@@ -154,25 +152,6 @@ setup the username too, set the `USER` variable.
                 -e PASSWORD=password \
                 nimble/data-channels
 
-#### Disable tests
-
-By default this docker runs a set of coyote tests, to ensure that your container
-and development environment is all set up. You can disable running the `coyote` tests
-using the flag:
-
-    -e RUNTESTS=0
-
-#### Run Kafka as root
-
-In the recent versions of fast-data-dev, we switched to running Kafka as user
-`nobody` instead of `root` since it was a bad practice. The old behaviour may
-still be desirable, for example on our
-[HDFS connector tests](http://coyote.landoop.com/connect/kafka-connect-hdfs/),
-Connect worker needs to run as the root user in order to be able to write to the
-HDFS. To switch to the old behaviour, use:
-
-    -e RUN_AS_ROOT=1
-
 #### JMX Metrics
 
 JMX metrics are enabled by default. If you want to disable them for some
@@ -184,5 +163,5 @@ environment variable:
                imble/data-channels
 
 JMX ports are hardcoded to `9581` for the broker, `9582` for schema registry,
-`9583` for REST proxy and `9584` for connect distributed. Zookeeper is exposed
+`9583` for REST proxy. Zookeeper is exposed
 at `9585`.
