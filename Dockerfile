@@ -1,5 +1,5 @@
 FROM alpine
-MAINTAINER Marios Andreopoulos <marios@landoop.com>
+MAINTAINER Djennadi Rabah <rabah.djennadi@holonix.it>
 
 # Update, install tooling and some basic setup
 RUN apk add --no-cache \
@@ -22,7 +22,6 @@ RUN apk add --no-cache \
     && mkdir /opt \
     && wget https://gitlab.com/andmarios/checkport/uploads/3903dcaeae16cd2d6156213d22f23509/checkport -O /usr/local/bin/checkport \
     && chmod +x /usr/local/bin/checkport \
-    && mkdir /extra-connect-jars /connectors \
     && mkdir /etc/supervisord.d /etc/supervisord.templates.d
 
 # Create Landoop configuration directory
@@ -40,16 +39,16 @@ RUN wget "$CP_URL" -O /opt/confluent.tar.gz \
 
 
 # Add Stream Reactor and Elastic Search (for elastic connector)
-ARG STREAM_REACTOR_URL=https://archive.landoop.com/third-party/stream-reactor/stream-reactor-0.3.0_3.3.0.tar.gz
-RUN wget "${STREAM_REACTOR_URL}" -O stream-reactor.tar.gz \
-    && mkdir -p /opt/connectors \
-    && tar -xzf stream-reactor.tar.gz --no-same-owner --strip-components=1 -C /opt/connectors \
-    && rm /stream-reactor.tar.gz \
-    && wget https://download.elastic.co/elasticsearch/release/org/elasticsearch/distribution/tar/elasticsearch/2.4.1/elasticsearch-2.4.1.tar.gz \
-    && tar xf /elasticsearch-2.4.1.tar.gz --no-same-owner \
-    && mv /elasticsearch-2.4.1/lib/*.jar /opt/connectors/kafka-connect-elastic/ \
-    && rm -rf /elasticsearch-2.4.1* \
-    && echo "plugin.path=/opt/connectors,/extra-connect-jars,/connectors" >> /opt/confluent/etc/schema-registry/connect-avro-distributed.properties
+# ARG STREAM_REACTOR_URL=https://archive.landoop.com/third-party/stream-reactor/stream-reactor-0.3.0_3.3.0.tar.gz
+# RUN wget "${STREAM_REACTOR_URL}" -O stream-reactor.tar.gz \
+#     && mkdir -p /opt/connectors \
+#     && tar -xzf stream-reactor.tar.gz --no-same-owner --strip-components=1 -C /opt/connectors \
+#     && rm /stream-reactor.tar.gz \
+#     && wget https://download.elastic.co/elasticsearch/release/org/elasticsearch/distribution/tar/elasticsearch/2.4.1/elasticsearch-2.4.1.tar.gz \
+#     && tar xf /elasticsearch-2.4.1.tar.gz --no-same-owner \
+#     && mv /elasticsearch-2.4.1/lib/*.jar /opt/connectors/kafka-connect-elastic/ \
+#     && rm -rf /elasticsearch-2.4.1* \
+#     && echo "plugin.path=/opt/connectors,/extra-connect-jars,/connectors" >> /opt/confluent/etc/schema-registry/connect-avro-distributed.properties
 
 # Create system symlinks to Confluent's binaries
 ADD binaries /opt/confluent/bin-install
@@ -71,23 +70,12 @@ RUN echo "access.control.allow.methods=GET,POST,PUT,DELETE,OPTIONS" >> /opt/conf
 #     && unzip /kafka-manager-1.3.2.1.zip -d /opt \
 #     && rm -rf /kafka-manager-1.3.2.1.zip
 
-# Add Twitter Connector
-ARG TWITTER_CONNECTOR_URL="https://archive.landoop.com/third-party/kafka-connect-twitter/kafka-connect-twitter-0.1-master-af63e4c-cp3.3.0-jar-with-dependencies.jar"
-RUN mkdir -p /opt/confluent/share/java/kafka-connect-twitter \
-    && wget "$TWITTER_CONNECTOR_URL" -P /opt/confluent/share/java/kafka-connect-twitter
 
 # Add dumb init and quickcert
-RUN wget https://github.com/Yelp/dumb-init/releases/download/v1.2.0/dumb-init_1.2.0_amd64 -O /usr/local/bin/dumb-init \
-    && wget https://github.com/andmarios/quickcert/releases/download/1.0/quickcert-1.0-linux-amd64-alpine -O /usr/local/bin/quickcert \
-    && chmod 0755 /usr/local/bin/dumb-init /usr/local/bin/quickcert
+#  RUN wget https://github.com/Yelp/dumb-init/releases/download/v1.2.0/dumb-init_1.2.0_amd64 -O /usr/local/bin/dumb-init \
+#    && wget https://github.com/andmarios/quickcert/releases/download/1.0/quickcert-1.0-linux-amd64-alpine -O /usr/local/bin/quickcert \
+#    && chmod 0755 /usr/local/bin/dumb-init /usr/local/bin/quickcert
 
-# Add Coyote and tests
-ADD integration-tests/kafka-tests.yml /usr/share/landoop
-ADD integration-tests/smoke-tests.sh /usr/local/bin
-RUN wget https://github.com/Landoop/coyote/releases/download/v1.1/coyote-1.1-linux-amd64 -O /usr/local/bin/coyote \
-    && chmod +x /usr/local/bin/coyote /usr/local/bin/smoke-tests.sh \
-    && mkdir -p /var/www/coyote-tests
-ADD integration-tests/index.html integration-tests/results /var/www/coyote-tests/
 
 # Add and Setup Schema-Registry-Ui
 ARG SCHEMA_REGISTRY_UI_URL="https://github.com/Landoop/schema-registry-ui/releases/download/v.0.9.3/schema-registry-ui-0.9.3.tar.gz"
@@ -106,12 +94,12 @@ RUN wget "$KAFKA_TOPICS_UI_URL" -O /kafka-topics-ui.tar.gz \
 COPY web/topics-ui-env.js /var/www/kafka-topics-ui/env.js
 
 # Add and Setup Kafka-Connect-UI
-ARG KAFKA_CONNECT_UI_URL="https://github.com/Landoop/kafka-connect-ui/releases/download/v.0.9.3/kafka-connect-ui-0.9.3.tar.gz"
-RUN wget "$KAFKA_CONNECT_UI_URL" -O /kafka-connect-ui.tar.gz \
-    && mkdir /var/www/kafka-connect-ui \
-    && tar xzf /kafka-connect-ui.tar.gz -C /var/www/kafka-connect-ui \
-    && rm -f /kafka-connect-ui.tar.gz
-COPY web/connect-ui-env.js /var/www/kafka-connect-ui/env.js
+# ARG KAFKA_CONNECT_UI_URL="https://github.com/Landoop/kafka-connect-ui/releases/download/v.0.9.3/kafka-connect-ui-0.9.3.tar.gz"
+# RUN wget "$KAFKA_CONNECT_UI_URL" -O /kafka-connect-ui.tar.gz \
+#     && mkdir /var/www/kafka-connect-ui \
+#     && tar xzf /kafka-connect-ui.tar.gz -C /var/www/kafka-connect-ui \
+#    && rm -f /kafka-connect-ui.tar.gz
+# COPY web/connect-ui-env.js /var/www/kafka-connect-ui/env.js
 
 # Add and setup Caddy Server
 ARG CADDY_URL=https://github.com/mholt/caddy/releases/download/v0.9.5/caddy_linux_amd64.tar.gz
@@ -122,25 +110,19 @@ RUN wget "$CADDY_URL" -O /caddy.tgz \
     && rm -f /caddy.tgz
 ADD web/Caddyfile /usr/share/landoop
 
-# Add fast-data-dev UI
+# Add data-channels UI
 COPY web/index.html web/env.js web/env-webonly.js /var/www/
 COPY web/img /var/www/img
 RUN ln -s /var/log /var/www/logs
 
-# Add sample data and install normcat
-ARG NORMCAT_URL=https://archive.landoop.com/tools/normcat/normcat_lowmem-1.1.1.tgz
-RUN wget "$NORMCAT_URL" -O /normcat.tgz \
-    && tar xf /normcat.tgz -C /usr/local/bin \
-    && rm /normcat.tgz
-COPY sample-data /usr/share/landoop/sample-data
 
 # Add executables, settings and configuration
 ADD extras/ /usr/share/landoop/
 ADD supervisord.conf /etc/supervisord.conf
 ADD supervisord.templates.d/* /etc/supervisord.templates.d/
-ADD setup-and-run.sh logs-to-kafka.sh /usr/local/bin/
+ADD setup-and-run.sh /usr/local/bin/
 ADD https://github.com/Landoop/kafka-autocomplete/releases/download/0.3/kafka /usr/share/landoop/kafka-completion
-RUN chmod +x /usr/local/bin/setup-and-run.sh /usr/local/bin/logs-to-kafka.sh \
+RUN chmod +x /usr/local/bin/setup-and-run.sh \
     && ln -s /usr/share/landoop/bashrc /root/.bashrc \
     && cat /etc/supervisord.templates.d/* > /etc/supervisord.d/01-fast-data.conf
 
@@ -155,6 +137,6 @@ RUN echo "BUILD_BRANCH=${BUILD_BRANCH}"      | tee /build.info \
     && echo "KAFKA_VERSION=${KAFKA_VERSION}" | tee -a /build.info \
     && echo "CP_VERSION=${CP_VERSION}"       | tee -a /build.info
 
-EXPOSE 2181 3030 3031 8081 8082 8083 9092
-ENTRYPOINT ["/usr/local/bin/dumb-init", "--"]
+EXPOSE 2181 3030 3031 8081 8082 9092
+# ENTRYPOINT ["/usr/local/bin/dumb-init", "--"]
 CMD ["/usr/local/bin/setup-and-run.sh"]

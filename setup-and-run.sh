@@ -5,7 +5,7 @@ BROKER_PORT="${BROKER_PORT:-9092}"
 BROKER_SSL_PORT="${BROKER_SSL_PORT:-9093}"
 REGISTRY_PORT="${REGISTRY_PORT:-8081}"
 REST_PORT="${REST_PORT:-8082}"
-CONNECT_PORT="${CONNECT_PORT:-8083}"
+# CONNECT_PORT="${CONNECT_PORT:-8083}"
 WEB_PORT="${WEB_PORT:-3030}"
 #KAFKA_MANAGER_PORT="3031"
 RUN_AS_ROOT="${RUN_AS_ROOT:false}"
@@ -13,20 +13,20 @@ ZK_JMX_PORT="9585"
 BROKER_JMX_PORT="9581"
 REGISTRY_JMX_PORT="9582"
 REST_JMX_PORT="9583"
-CONNECT_JMX_PORT="9584"
+# CONNECT_JMX_PORT="9584"
 DISABLE_JMX="${DISABLE_JMX:false}"
 ENABLE_SSL="${ENABLE_SSL:false}"
 SSL_EXTRA_HOSTS="${SSL_EXTRA_HOSTS:-}"
 DEBUG="${DEBUG:-false}"
 TOPIC_DELETE="${TOPIC_DELETE:-true}"
-SAMPLEDATA="${SAMPLEDATA:-1}"
-RUNNING_SAMPLEDATA="${RUNNING_SAMPLEDATA:-0}"
-export ZK_PORT BROKER_PORT BROKER_SSL_PORT REGISTRY_PORT REST_PORT CONNECT_PORT WEB_PORT RUN_AS_ROOT
-export ZK_JMX_PORT BROKER_JMX_PORT REGISTRY_JMX_PORT REST_JMX_PORT CONNECT_JMX_PORT DISABLE_JMX
-export ENABLE_SSL SSL_EXTRA_HOSTS DEBUG TOPIC_DELETE SAMPLEDATA RUNNING_SAMPLEDATA
+# SAMPLEDATA="${SAMPLEDATA:-1}"
+# RUNNING_SAMPLEDATA="${RUNNING_SAMPLEDATA:-0}"
+export ZK_PORT BROKER_PORT BROKER_SSL_PORT REGISTRY_PORT REST_PORT WEB_PORT RUN_AS_ROOT
+export ZK_JMX_PORT BROKER_JMX_PORT REGISTRY_JMX_PORT REST_JMX_PORT DISABLE_JMX
+export ENABLE_SSL SSL_EXTRA_HOSTS DEBUG TOPIC_DELETE  
 
 
-PORTS="$ZK_PORT $BROKER_PORT $REGISTRY_PORT $REST_PORT $CONNECT_PORT $WEB_PORT $KAFKA_MANAGER_PORT"
+PORTS="$ZK_PORT $BROKER_PORT $REGISTRY_PORT $REST_PORT $WEB_PORT $KAFKA_MANAGER_PORT"
 
 # Set webserver basicauth username and password
 USER="${USER:-kafka}"
@@ -71,16 +71,14 @@ EOF
 ## Schema Registry specific
 cat <<EOF >>/opt/confluent/etc/schema-registry/connect-avro-distributed.properties
 
-rest.port=$CONNECT_PORT
+# rest.port=$CONNECT_PORT
 EOF
 
 ## Other infra specific (caddy, web ui, tests, logs)
 sed -e 's/3030/'"$WEB_PORT"'/' -e 's/2181/'"$ZK_PORT"'/' -e 's/9092/'"$BROKER_PORT"'/' \
-    -e 's/8081/'"$REGISTRY_PORT"'/' -e 's/8082/'"$REST_PORT"'/' -e 's/8083/'"$CONNECT_PORT"'/' \
+    -e 's/8081/'"$REGISTRY_PORT"'/' -e 's/8082/'"$REST_PORT"'/'  \
     -i /usr/share/landoop/Caddyfile \
-       /var/www/env.js \
-       /usr/share/landoop/kafka-tests.yml \
-       /usr/local/bin/logs-to-kafka.sh
+       /var/www/env.js 
 
 # Allow for topic deletion by default, unless TOPIC_DELETE is set
 if echo "$TOPIC_DELETE" | grep -sqE "true|TRUE|y|Y|yes|YES|1"; then
@@ -91,21 +89,21 @@ fi
 
 ## TODO: deprecate
 # Remove ElasticSearch if needed
-PREFER_HBASE="${PREFER_HBASE:-false}"
-if echo "$PREFER_HBASE" | grep -sqE "true|TRUE|y|Y|yes|YES|1"; then
-    rm -rf /extra-connect-jars/* /opt/confluent-*/share/java/kafka-connect-elastic*
-    echo -e "\e[92mFixing HBase connector: Removing ElasticSearch and Twitter connector.\e[39m"
-fi
+#  PREFER_HBASE="${PREFER_HBASE:-false}"
+#  if echo "$PREFER_HBASE" | grep -sqE "true|TRUE|y|Y|yes|YES|1"; then
+#     rm -rf /extra-connect-jars/* /opt/confluent-*/share/java/kafka-connect-elastic*
+#     echo -e "\e[92mFixing HBase connector: Removing ElasticSearch and Twitter connector.\e[39m"
+#  fi
 
 # Disable Connectors
-OLD_IFS="$IFS"
-IFS=","
-for connector in $DISABLE; do
-    echo "Disabling connector: kafka-connect-${connector}"
-    rm -rf "/opt/confluent/share/java/kafka-connect-${connector}" "/opt/connectors/kafka-connect-${connector}"
-    [[ "elastic" == "$connector" ]] && rm -rf /extra-connect-jars/*
-done
-IFS="$OLD_IFS"
+# OLD_IFS="$IFS"
+# IFS=","
+# for connector in $DISABLE; do
+#    echo "Disabling connector: kafka-connect-${connector}"
+#    rm -rf "/opt/confluent/share/java/kafka-connect-${connector}" "/opt/connectors/kafka-connect-${connector}"
+#     [[ "elastic" == "$connector" ]] && rm -rf /extra-connect-jars/*
+# done
+# IFS="$OLD_IFS"
 
 # Set ADV_HOST if needed
 if [[ ! -z "${ADV_HOST}" ]]; then
@@ -114,14 +112,14 @@ if [[ ! -z "${ADV_HOST}" ]]; then
          >> /opt/confluent/etc/kafka/server.properties
     echo -e "\nrest.advertised.host.name=${ADV_HOST}" \
          >> /opt/confluent/etc/schema-registry/connect-avro-distributed.properties
-    sed -e 's#localhost#'"${ADV_HOST}"'#g' -i /usr/share/landoop/kafka-tests.yml /var/www/env.js /etc/supervisord.d/*
+    sed -e 's#localhost#'"${ADV_HOST}"'#g' -i  /var/www/env.js /etc/supervisord.d/*
 fi
 
 # Configure JMX if needed or disable it.
 if ! echo "$DISABLE_JMX" | grep -sqE "true|TRUE|y|Y|yes|YES|1"; then
-    PORTS="$PORTS $BROKER_JMX_PORT $REGISTRY_JMX_PORT $REST_JMX_PORT $CONNECT_JMX_PORT $ZK_JMX_PORT"
+    PORTS="$PORTS $BROKER_JMX_PORT $REGISTRY_JMX_PORT $REST_JMX_PORT  $ZK_JMX_PORT"
     sed -r -e 's/^;(environment=JMX_PORT)/\1/' \
-        -e 's/^environment=VCON=1,KAFKA_HEAP_OPTS/environment=JMX_PORT='"$CONNECT_JMX_PORT"',KAFKA_HEAP_OPTS/' \
+        -e 's/^environment=VCON=1,KAFKA_HEAP_OPTS/environment= KAFKA_HEAP_OPTS/' \
         -i /etc/supervisord.d/*
 else
     sed -r -e 's/,KAFKA_JMX_OPTS="[^"]*"//' \
@@ -298,15 +296,15 @@ export CONNECT_HEAP
 sed -e 's|{{CONNECT_HEAP}}|'"${CONNECT_HEAP}"'|' -i /etc/supervisord.d/*.conf
 
 # Set sample data if needed
-if echo "$RUNNING_SAMPLEDATA" | grep -sqE "true|TRUE|y|Y|yes|YES|1" && echo "$SAMPLEDATA" | grep -sqE "true|TRUE|y|Y|yes|YES|1"; then
-        cp /usr/share/landoop/99-supervisord-running-sample-data.conf /etc/supervisord.d/
-elif echo "$SAMPLEDATA" | grep -sqE "true|TRUE|y|Y|yes|YES|1"; then
-    # This should be added only if we don't have running data, because it sets
-    # retention period to 10 years (as the data is so few in this case).
-    cp /usr/share/landoop/99-supervisord-sample-data.conf /etc/supervisord.d/
-else
-    # If SAMPLEDATA=0 and FORWARDLOGS connector not explicitly requested
-    [[ -z "$FORWARDLOGS" ]] && export FORWARDLOGS=0
-fi
+# if echo "$RUNNING_SAMPLEDATA" | grep -sqE "true|TRUE|y|Y|yes|YES|1" && echo "$SAMPLEDATA" | grep -sqE "true|TRUE|y|Y|yes|YES|1"; then
+#         cp /usr/share/landoop/99-supervisord-running-sample-data.conf /etc/supervisord.d/
+# else echo "$SAMPLEDATA" | grep -sqE "true|TRUE|y|Y|yes|YES|1"; then
+# This should be added only if we don't have running data, because it sets
+# retention period to 10 years (as the data is so few in this case).
+#    cp /usr/share/landoop/99-supervisord-sample-data.conf /etc/supervisord.d/
+# else
+# If SAMPLEDATA=0 and FORWARDLOGS connector not explicitly requested
+# [[ -z "$FORWARDLOGS" ]] && export FORWARDLOGS=0
+# fi
 
 exec /usr/bin/supervisord -c /etc/supervisord.conf
