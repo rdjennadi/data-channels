@@ -14,7 +14,7 @@ When you need:
 ### Run on the Cloud
 
 You may want to quickly run a Kafka instance in GCE or AWS and access it from your local
-computer. Fast-data-dev has you covered.
+computer. data-channels has you covered.
 
 Start a VM in the respective cloud. You can use the OS of your choice, provided it has
 a docker package. CoreOS is a nice choice as you get docker out of the box.
@@ -87,7 +87,7 @@ broker? We got you covered. Enable TLS via `-e ENABLE_SSL=1`:
                -e ENABLE_SSL=1 \
                nimble/data-channels
 
-When fast-data-dev spawns, it will create a self-signed CA. From that it will
+When data-channels spawns, it will create a self-signed CA. From that it will
 create a truststore and two signed key-certificate pairs, one for the broker,
 one for your client. You can access the truststore and the client's keystore
 from our Web UI, under `/certs` (e.g http://localhost:3030/certs). The password
@@ -96,18 +96,18 @@ The SSL port of the broker is `9093`, configurable via the `BROKER_SSL_PORT`
 variable.
 
 Here is a simple example of how the SSL functionality can be used. Let's spawn
-a fast-data-dev to act as the server:
+a data-channels to act as the server:
 
-    docker run --rm --net=host -e ENABLE_SSL=1 -e RUNTESTS=0 landoop/fast-data-dev
+    docker run --rm --net=host -e ENABLE_SSL=1 -e RUNTESTS=0 nimble/data-channels
 
-On a new console, run another instance of fast-data-dev only to get access to
+On a new console, run another instance of data-channels only to get access to
 Kafka command line utilities and use TLS to connect to the broker of the former
 container:
 
     docker run --rm -it --net=host --entrypoint bash nimble/data-channels
-    root@fast-data-dev / $ wget localhost:3030/certs/truststore.jks
-    root@fast-data-dev / $ wget localhost:3030/certs/client.jks
-    root@fast-data-dev / $ kafka-producer-perf-test --topic tls_test \
+    root@data-channels / $ wget localhost:3030/certs/truststore.jks
+    root@data-channels / $ wget localhost:3030/certs/client.jks
+    root@data-channels / $ kafka-producer-perf-test --topic tls_test \
       --throughput 100000 --record-size 1000 --num-records 2000 \
       --producer-props bootstrap.servers="localhost:9093" security.protocol=SSL \
       ssl.keystore.location=client.jks ssl.keystore.password=fastdata \
@@ -128,7 +128,7 @@ requisite:
 
     docker run --rm -it --net=host \
                -e WEB_ONLY=true \
-               landoop/fast-data-dev
+               nimble/data-channels
 
 This is useful if you already have a cluster with Confluent's distribution
 installed and want just the additional Landoop Fast Data web UI.
