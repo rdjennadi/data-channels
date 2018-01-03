@@ -2,28 +2,13 @@
 
 This tool is an extention/editing of the fast-data-dev implementation powered by Landoop (please see the basic implementation clicking in this URL: https://github.com/Landoop/fast-data-dev)
 
-### Why ?
+### Open source tools
 
-When you need:
+Open source tools installed within this image are:
 
 1. **Confluent** OSS with Apache Kafka including: ZooKeeper, Schema Registry, Kafka REST
 2. **Landoop** Fast Data Tools including: kafka-topics-ui, schema-registry-ui
 
-
-
-### Run on the Cloud
-
-You may want to quickly run a Kafka instance in GCE or AWS and access it from your local
-computer. data-channels has you covered.
-
-Start a VM in the respective cloud. You can use the OS of your choice, provided it has
-a docker package. CoreOS is a nice choice as you get docker out of the box.
-
-Next you have to open the firewall, both for your machines but also *for the VM itself*.
-This is important!
-
-
-Enjoy Kafka, Schema Registry, Landoop UIs.
 
 ### Customize execution
 
